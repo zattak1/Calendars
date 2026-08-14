@@ -987,6 +987,11 @@ class Calendars_Event extends Base_Calendars_Event
 							array_merge($options, array(
 								'toPublisherId' => $stream->publisherId,
 								'toStreamName' => $stream->name,
+								// the currency the event was priced in. Assets::pay() defaults to
+								// 'USD' and converts, while Assets_Credits::getPaymentsInfo() reads
+								// this same attribute defaulting to 'credits', so omitting it made
+								// a credits-priced event charge convert(amount, USD => credits).
+								'currency' => Q::ifset($payment, 'currency', 'credits'),
 								'autoCharge' => $options['autoCharge']
 							))
 						);
