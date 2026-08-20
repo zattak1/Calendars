@@ -365,5 +365,15 @@
 				"EventParticipation": "\u30a4\u30d9\u30f3\u30c8\u53c2\u52a0"
 			}
 		}
+	},
+	"attendance": {
+		"Title": "\u51fa\u5e2d",
+		"SearchPlaceholder": "\u540d\u524d\u3067\u691c\u7d22",
+		"NoOne": "\u307e\u3060\u8ab0\u3082\u3044\u306a\u3044",
+		"going": {
+			"yes": "\u884c\u304f",
+			"maybe": "\u591a\u5206",
+			"no": "\u884c\u304b\u306a\u3044"
+		}
 	}
 }

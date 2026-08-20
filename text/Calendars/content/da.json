@@ -391,5 +391,15 @@
 				"EventParticipation": "Deltagelse i begivenheder"
 			}
 		}
+	},
+	"attendance": {
+		"Title": "Tilstedev\u00e6relse",
+		"SearchPlaceholder": "S\u00f8g efter navn",
+		"NoOne": "Ingen endnu",
+		"going": {
+			"yes": "G\u00e5r",
+			"maybe": "M\u00e5ske",
+			"no": "G\u00e5r ikke"
+		}
 	}
 }

@@ -391,5 +391,15 @@
 				"EventParticipation": "Ekitaldiaren parte-hartzea"
 			}
 		}
+	},
+	"attendance": {
+		"Title": "Asistentzia",
+		"SearchPlaceholder": "Bilatu izenaren arabera",
+		"NoOne": "Inor ez oraindik",
+		"going": {
+			"yes": "Joango",
+			"maybe": "Agian",
+			"no": "Ez joango."
+		}
 	}
 }

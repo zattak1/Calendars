@@ -391,5 +391,15 @@
 				"EventParticipation": "\u00da\u010dast na akci"
 			}
 		}
+	},
+	"attendance": {
+		"Title": "\u00da\u010dast",
+		"SearchPlaceholder": "Hledat podle jm\u00e9na",
+		"NoOne": "Zat\u00edm nikdo",
+		"going": {
+			"yes": "Jde",
+			"maybe": "Mo\u017en\u00e1",
+			"no": "Nep\u016fjdu"
+		}
 	}
 }

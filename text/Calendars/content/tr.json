@@ -365,5 +365,15 @@
 				"EventParticipation": "Etkinli\u011fe Kat\u0131l\u0131m"
 			}
 		}
+	},
+	"attendance": {
+		"Title": "Kat\u0131l\u0131m",
+		"SearchPlaceholder": "\u0130simle ara",
+		"NoOne": "Hen\u00fcz kimse yok.",
+		"going": {
+			"yes": "Giden",
+			"maybe": "Belki",
+			"no": "Gitmiyorum"
+		}
 	}
 }

@@ -365,5 +365,15 @@
 				"EventParticipation": "Tapahtumaan osallistuminen"
 			}
 		}
+	},
+	"attendance": {
+		"Title": "L\u00e4sn\u00e4olo",
+		"SearchPlaceholder": "Hae nimell\u00e4",
+		"NoOne": "Kukaan ei viel\u00e4",
+		"going": {
+			"yes": "Menossa",
+			"maybe": "Ehk\u00e4",
+			"no": "En mene"
+		}
 	}
 }

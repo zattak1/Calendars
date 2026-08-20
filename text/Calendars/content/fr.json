@@ -365,5 +365,15 @@
 				"EventParticipation": "Participation \u00e0 l&#39;\u00e9v\u00e9nement"
 			}
 		}
+	},
+	"attendance": {
+		"Title": "Pr\u00e9sence",
+		"SearchPlaceholder": "Recherche par nom",
+		"NoOne": "Personne pour l&#39;instant",
+		"going": {
+			"yes": "En allant",
+			"maybe": "Peut \u00eatre",
+			"no": "Je n&#39;y vais pas"
+		}
 	}
 }

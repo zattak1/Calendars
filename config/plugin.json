@@ -2,7 +2,7 @@
 	"Q": {
 		"pluginInfo": {
 			"Calendars": {
-				"version": "0.5.5",
+				"version": "0.5.6",
 				"compatible": "0.1",
 				"requires": {
 					"Users": "1.0",
@@ -63,6 +63,7 @@
 			":publisherId/:eventId/:method.outlook": {"module": "Calendars", "action": "outlook"},
 			":publisherId/:eventId/:method.ics": {"module": "Calendars", "action": "ics"},
 			"Calendars/attendance/:publisherId/:eventId": {"module": "Calendars", "action": "attendance"},
+			"Calendars/attendees/:publisherId/:eventId": {"module": "Calendars", "action": "attendees"},
 			"Calendars/personal/:userId.ics": {"module": "Calendars", "action": "calendarIcs"}
 		},
 		"images": {

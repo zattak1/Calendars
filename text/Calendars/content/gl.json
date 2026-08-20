@@ -365,5 +365,15 @@
 				"EventParticipation": "Participaci\u00f3n en eventos"
 			}
 		}
+	},
+	"attendance": {
+		"Title": "Asistencia",
+		"SearchPlaceholder": "Buscar por nome",
+		"NoOne": "Ningu\u00e9n a\u00ednda",
+		"going": {
+			"yes": "Indo",
+			"maybe": "Quizais",
+			"no": "Non vou"
+		}
 	}
 }

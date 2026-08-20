@@ -365,5 +365,15 @@
 				"EventParticipation": "Dal\u012bba pas\u0101kumos"
 			}
 		}
+	},
+	"attendance": {
+		"Title": "Apmekl\u0113t\u012bba",
+		"SearchPlaceholder": "Mekl\u0113t p\u0113c nosaukuma",
+		"NoOne": "V\u0113l neviens",
+		"going": {
+			"yes": "Do\u0161an\u0101s",
+			"maybe": "Varb\u016bt",
+			"no": "Neie\u0161u"
+		}
 	}
 }

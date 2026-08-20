@@ -365,5 +365,15 @@
 				"EventParticipation": "Penyertaan Acara"
 			}
 		}
+	},
+	"attendance": {
+		"Title": "Kehadiran",
+		"SearchPlaceholder": "Cari mengikut nama",
+		"NoOne": "Tiada sesiapa lagi",
+		"going": {
+			"yes": "Pergi",
+			"maybe": "Mungkin",
+			"no": "Tidak akan pergi"
+		}
 	}
 }

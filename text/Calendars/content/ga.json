@@ -365,5 +365,15 @@
 				"EventParticipation": "Rannph\u00e1irt\u00edocht Imeachta\u00ed"
 			}
 		}
+	},
+	"attendance": {
+		"Title": "Tinreamh",
+		"SearchPlaceholder": "Cuardaigh de r\u00e9ir ainm",
+		"NoOne": "N\u00edl aon duine f\u00f3s",
+		"going": {
+			"yes": "Ag dul",
+			"maybe": "B\u2019fh\u00e9idir",
+			"no": "N\u00ed ag dul"
+		}
 	}
 }

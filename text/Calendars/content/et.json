@@ -365,5 +365,15 @@
 				"EventParticipation": "\u00dcritusel osalemine"
 			}
 		}
+	},
+	"attendance": {
+		"Title": "Osav\u00f5tt",
+		"SearchPlaceholder": "Otsi nime j\u00e4rgi",
+		"NoOne": "Keegi veel",
+		"going": {
+			"yes": "L\u00e4hen",
+			"maybe": "V\u00f5ib-olla",
+			"no": "Ei l\u00e4he"
+		}
 	}
 }

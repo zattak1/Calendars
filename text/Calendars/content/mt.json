@@ -365,5 +365,15 @@
 				"EventParticipation": "Parte\u010bipazzjoni fl-Avveniment"
 			}
 		}
+	},
+	"attendance": {
+		"Title": "Attendenza",
+		"SearchPlaceholder": "Fittex bl-isem",
+		"NoOne": "\u0126add g\u0127adu",
+		"going": {
+			"yes": "Sejjer",
+			"maybe": "Forsi",
+			"no": "Mhux sejjer"
+		}
 	}
 }

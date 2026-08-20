@@ -365,5 +365,15 @@
 				"EventParticipation": "Deltagande i evenemanget"
 			}
 		}
+	},
+	"attendance": {
+		"Title": "N\u00e4rvaro",
+		"SearchPlaceholder": "S\u00f6k efter namn",
+		"NoOne": "Ingen \u00e4n",
+		"going": {
+			"yes": "G\u00e5ende",
+			"maybe": "Kanske",
+			"no": "G\u00e5r inte"
+		}
 	}
 }

@@ -365,5 +365,15 @@
 				"EventParticipation": "\u00da\u010das\u0165 na podujat\u00ed"
 			}
 		}
+	},
+	"attendance": {
+		"Title": "\u00da\u010das\u0165",
+		"SearchPlaceholder": "H\u013eada\u0165 pod\u013ea mena",
+		"NoOne": "Zatia\u013e nikto",
+		"going": {
+			"yes": "Idem",
+			"maybe": "Mo\u017eno",
+			"no": "Nejdem"
+		}
 	}
 }

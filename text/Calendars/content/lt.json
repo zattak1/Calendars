@@ -365,5 +365,15 @@
 				"EventParticipation": "Dalyvavimas renginiuose"
 			}
 		}
+	},
+	"attendance": {
+		"Title": "Lankomumas",
+		"SearchPlaceholder": "Ie\u0161koti pagal pavadinim\u0105",
+		"NoOne": "Dar niekas",
+		"going": {
+			"yes": "Eiti",
+			"maybe": "Galb\u016bt",
+			"no": "Nei\u0161eisiu"
+		}
 	}
 }

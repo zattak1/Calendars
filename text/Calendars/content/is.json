@@ -365,5 +365,15 @@
 				"EventParticipation": "\u00de\u00e1tttaka \u00ed vi\u00f0bur\u00f0i"
 			}
 		}
+	},
+	"attendance": {
+		"Title": "M\u00e6ting",
+		"SearchPlaceholder": "Leita eftir nafni",
+		"NoOne": "Enginn enn\u00fe\u00e1",
+		"going": {
+			"yes": "A\u00f0 fara",
+			"maybe": "Kannski",
+			"no": "Ekki a\u00f0 fara"
+		}
 	}
 }

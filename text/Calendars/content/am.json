@@ -365,5 +365,15 @@
 				"EventParticipation": "\u12e8\u12dd\u130d\u1305\u1275 \u1270\u1233\u1275\u134e"
 			}
 		}
+	},
+	"attendance": {
+		"Title": "\u1270\u1308\u129d\u1290\u1275",
+		"SearchPlaceholder": "\u1260\u1235\u121d \u1348\u120d\u130d",
+		"NoOne": "\u12a5\u1235\u12ab\u1201\u1295 \u121b\u1295\u121d \u12e8\u1208\u121d",
+		"going": {
+			"yes": "\u1260\u1218\u1204\u12f5 \u120b\u12ed",
+			"maybe": "\u121d\u1293\u120d\u1263\u1275",
+			"no": "\u12a0\u120d\u1204\u12f5\u121d"
+		}
 	}
 }

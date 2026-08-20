@@ -365,5 +365,15 @@
 				"EventParticipation": "Esem\u00e9nyen val\u00f3 r\u00e9szv\u00e9tel"
 			}
 		}
+	},
+	"attendance": {
+		"Title": "R\u00e9szv\u00e9tel",
+		"SearchPlaceholder": "Keres\u00e9s n\u00e9v szerint",
+		"NoOne": "M\u00e9g senki",
+		"going": {
+			"yes": "Halad\u00f3",
+			"maybe": "Tal\u00e1n",
+			"no": "Nem megyek"
+		}
 	}
 }

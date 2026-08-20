@@ -1,0 +1,103 @@
+/* ── Summary stats ── */
+.Calendars_attendees_summary {
+	display: flex; gap: 24px; padding: 10px 0 16px; flex-wrap: wrap;
+}
+.Calendars_attendees_stat { text-align: center; min-width: 60px; }
+.Calendars_attendees_number { display: block; font-size: 28px; font-weight: 700; }
+.Calendars_attendees_label { font-size: 12px; opacity: 0.7; }
+
+/* ── Table ── */
+.Calendars_attendees_table {
+	width: 100%; border-collapse: collapse; font-size: 14px;
+	table-layout: fixed;
+}
+.Calendars_attendees_th_name { width: 40%; }
+.Calendars_attendees_th_going { width: 12%; }
+.Calendars_attendees_th_inviter { width: 28%; }
+.Calendars_attendees_th_paid { width: 20%; }
+
+.Calendars_attendees_table th {
+	text-align: left; font-weight: 600; font-size: 11px; text-transform: uppercase;
+	letter-spacing: 0.05em; opacity: 0.5; padding: 8px 10px;
+	border-bottom: 2px solid rgba(128,128,128,0.2);
+	white-space: nowrap; user-select: none;
+}
+.Calendars_attendees_table th[data-sort] { cursor: pointer; }
+.Calendars_attendees_table th[data-sort]:hover { opacity: 0.8; }
+.Calendars_sort_arrow { font-size: 10px; opacity: 0.6; }
+
+.Calendars_attendees_table td {
+	padding: 10px; vertical-align: middle;
+	border-bottom: 1px solid rgba(128,128,128,0.1);
+	overflow: hidden; text-overflow: ellipsis;
+}
+.Calendars_attendees_th_paid,
+.Calendars_attendees_td_paid { text-align: right !important; }
+.Calendars_attendees_th_going,
+.Calendars_attendees_td_going { text-align: center !important; }
+
+/* ── Name cell: avatar + name on one line ── */
+.Calendars_attendees_td_name .Users_avatar_tool {
+	display: flex; align-items: center; gap: 8px;
+}
+.Calendars_attendees_td_name .Users_avatar_tool img {
+	width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+}
+
+/* ── Row styling ── */
+.Calendars_attendees_mine { background: rgba(46,158,79,0.06); }
+.Calendars_attendees_badge {
+	display: inline-block; padding: 3px 12px; border-radius: 12px;
+	font-size: 12px; font-weight: 600; color: white; white-space: nowrap;
+}
+.Calendars_attendees_going_yes { background: #2e9e4f; }
+.Calendars_attendees_going_maybe { background: #d4a017; }
+.Calendars_attendees_going_no { background: rgba(128,128,128,0.5); }
+
+.Calendars_attendees_paid { color: #2e9e4f; font-weight: 700; font-size: 15px; }
+.Calendars_attendees_unpaid { opacity: 0.25; font-size: 16px; }
+.Calendars_attendees_you { font-weight: 600; opacity: 0.65; font-size: 13px; }
+.Calendars_attendees_dash { opacity: 0.3; }
+
+.Calendars_attendees_separator td {
+	padding: 14px 10px 6px; border-bottom: none;
+}
+.Calendars_attendees_separator span {
+	font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;
+	font-weight: 600; opacity: 0.4;
+}
+.Calendars_attendees_empty { opacity: 0.5; font-size: 13px; padding: 12px 0; }
+
+/* ── Responsive: stack on narrow screens ── */
+@media (max-width: 600px) {
+	.Calendars_attendees_table { table-layout: auto; }
+	.Calendars_attendees_table thead { display: none; }
+	.Calendars_attendees_table,
+	.Calendars_attendees_table tbody,
+	.Calendars_attendees_table tr,
+	.Calendars_attendees_table td {
+		display: block; width: 100%;
+	}
+	.Calendars_attendees_row {
+		padding: 10px 0;
+		border-bottom: 1px solid rgba(128,128,128,0.15);
+	}
+	.Calendars_attendees_table td {
+		padding: 4px 10px; border-bottom: none; text-align: left !important;
+	}
+	.Calendars_attendees_table td::before {
+		content: attr(data-label);
+		font-size: 11px; font-weight: 600; text-transform: uppercase;
+		opacity: 0.45; display: inline-block; min-width: 80px;
+	}
+	.Calendars_attendees_td_name::before { display: none; }
+	.Calendars_attendees_separator { display: none; }
+}
+
+/* ── Dark mode ── */
+@media (prefers-color-scheme: dark) {
+	.Calendars_attendees_mine { background: rgba(46,158,79,0.1); }
+	.Calendars_attendees_paid { color: #35b25b; }
+	.Calendars_attendees_going_yes { background: #35b25b; }
+	.Calendars_attendees_going_maybe { background: #e0b020; }
+}

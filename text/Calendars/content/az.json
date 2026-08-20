@@ -391,5 +391,15 @@
 				"EventParticipation": "T\u0259dbird\u0259 i\u015ftirak"
 			}
 		}
+	},
+	"attendance": {
+		"Title": "Davamiyy\u0259t",
+		"SearchPlaceholder": "Ad\u0131na g\u00f6r\u0259 axtar\u0131\u015f",
+		"NoOne": "H\u0259l\u0259 he\u00e7 kim",
+		"going": {
+			"yes": "Gedir",
+			"maybe": "B\u0259lk\u0259",
+			"no": "Getmir\u0259m"
+		}
 	}
 }

@@ -365,5 +365,15 @@
 				"EventParticipation": "\uc774\ubca4\ud2b8 \ucc38\uc5ec"
 			}
 		}
+	},
+	"attendance": {
+		"Title": "\ucd9c\uc11d",
+		"SearchPlaceholder": "\uc774\ub984\uc73c\ub85c \uac80\uc0c9",
+		"NoOne": "\uc544\uc9c1 \uc544\ubb34\ub3c4",
+		"going": {
+			"yes": "\uac00\uace0 \uc788\ub2e4",
+			"maybe": "\uc544\ub9c8\ub3c4",
+			"no": "\uc548 \uac00\uc694"
+		}
 	}
 }

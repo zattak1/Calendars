@@ -391,5 +391,15 @@
 				"EventParticipation": "Pjes\u00ebmarrja n\u00eb Evente"
 			}
 		}
+	},
+	"attendance": {
+		"Title": "Pjes\u00ebmarrja",
+		"SearchPlaceholder": "K\u00ebrko sipas emrit",
+		"NoOne": "Askush ende",
+		"going": {
+			"yes": "Duke shkuar",
+			"maybe": "Ndoshta",
+			"no": "Nuk do t\u00eb shkoj"
+		}
 	}
 }

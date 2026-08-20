@@ -365,5 +365,15 @@
 				"EventParticipation": "Participarea la eveniment"
 			}
 		}
+	},
+	"attendance": {
+		"Title": "Prezen\u021b\u0103",
+		"SearchPlaceholder": "C\u0103utare dup\u0103 nume",
+		"NoOne": "Nimeni \u00eenc\u0103",
+		"going": {
+			"yes": "Merg\u00e2nd",
+			"maybe": "Pot fi",
+			"no": "Nu merg"
+		}
 	}
 }

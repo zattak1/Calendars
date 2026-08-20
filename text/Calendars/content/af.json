@@ -391,5 +391,15 @@
 				"EventParticipation": "Geleentheidsdeelname"
 			}
 		}
+	},
+	"attendance": {
+		"Title": "Bywoning",
+		"SearchPlaceholder": "Soek volgens naam",
+		"NoOne": "Niemand nog nie",
+		"going": {
+			"yes": "Gaan",
+			"maybe": "Miskien",
+			"no": "Nie gaan nie"
+		}
 	}
 }

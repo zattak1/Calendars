@@ -365,5 +365,15 @@
 				"EventParticipation": "Partecipazione all&#39;evento"
 			}
 		}
+	},
+	"attendance": {
+		"Title": "Presenze",
+		"SearchPlaceholder": "Cerca per nome",
+		"NoOne": "Nessuno ancora",
+		"going": {
+			"yes": "Andando",
+			"maybe": "Forse",
+			"no": "Non andr\u00f2"
+		}
 	}
 }

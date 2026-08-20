@@ -391,5 +391,15 @@
 				"EventParticipation": "Partisipasi Acara"
 			}
 		}
+	},
+	"attendance": {
+		"Title": "Kehadiran",
+		"SearchPlaceholder": "Cari berdasarkan nama",
+		"NoOne": "Belum ada siapa pun",
+		"going": {
+			"yes": "Pergi",
+			"maybe": "Mungkin",
+			"no": "Tidak akan pergi"
+		}
 	}
 }

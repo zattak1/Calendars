@@ -365,5 +365,15 @@
 				"EventParticipation": "Cyfranogiad yn y Digwyddiad"
 			}
 		}
+	},
+	"attendance": {
+		"Title": "Presenoldeb",
+		"SearchPlaceholder": "Chwilio yn \u00f4l enw",
+		"NoOne": "Neb eto",
+		"going": {
+			"yes": "Mynd",
+			"maybe": "Efallai",
+			"no": "Ddim yn mynd"
+		}
 	}
 }

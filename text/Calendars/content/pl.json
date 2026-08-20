@@ -365,5 +365,15 @@
 				"EventParticipation": "Udzia\u0142 w wydarzeniu"
 			}
 		}
+	},
+	"attendance": {
+		"Title": "Frekwencja",
+		"SearchPlaceholder": "Szukaj wed\u0142ug nazwy",
+		"NoOne": "Nikt jeszcze",
+		"going": {
+			"yes": "P\u00f3j\u015bcie",
+			"maybe": "Mo\u017ce",
+			"no": "Nie id\u0119"
+		}
 	}
 }

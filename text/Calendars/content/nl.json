@@ -391,5 +391,15 @@
 				"EventParticipation": "Deelname aan het evenement"
 			}
 		}
+	},
+	"attendance": {
+		"Title": "Aanwezigheid",
+		"SearchPlaceholder": "Zoeken op naam",
+		"NoOne": "Nog niemand",
+		"going": {
+			"yes": "Gaan",
+			"maybe": "Misschien",
+			"no": "Ik ga niet"
+		}
 	}
 }

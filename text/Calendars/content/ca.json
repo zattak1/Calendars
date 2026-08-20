@@ -391,5 +391,15 @@
 				"EventParticipation": "Participaci\u00f3 en esdeveniments"
 			}
 		}
+	},
+	"attendance": {
+		"Title": "Assist\u00e8ncia",
+		"SearchPlaceholder": "Cerca per nom",
+		"NoOne": "Encara ning\u00fa",
+		"going": {
+			"yes": "Anant",
+			"maybe": "Potser",
+			"no": "No hi anir\u00e9"
+		}
 	}
 }

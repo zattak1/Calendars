@@ -391,5 +391,15 @@
 				"EventParticipation": "Pakikilahok sa Kaganapan"
 			}
 		}
+	},
+	"attendance": {
+		"Title": "Pagdalo",
+		"SearchPlaceholder": "Maghanap ayon sa pangalan",
+		"NoOne": "Wala pa",
+		"going": {
+			"yes": "Pupunta",
+			"maybe": "Siguro",
+			"no": "Hindi pupunta"
+		}
 	}
 }

@@ -365,5 +365,15 @@
 				"EventParticipation": "Udele\u017eba na dogodku"
 			}
 		}
+	},
+	"attendance": {
+		"Title": "Udele\u017eba",
+		"SearchPlaceholder": "Iskanje po imenu",
+		"NoOne": "\u0160e nih\u010de",
+		"going": {
+			"yes": "Grem",
+			"maybe": "Morda",
+			"no": "Ne grem"
+		}
 	}
 }

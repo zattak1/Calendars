@@ -391,5 +391,15 @@
 				"EventParticipation": "Sudjelovanje na doga\u0111ajima"
 			}
 		}
+	},
+	"attendance": {
+		"Title": "Prisutnost",
+		"SearchPlaceholder": "Pretra\u017ei po imenu",
+		"NoOne": "Nitko jo\u0161",
+		"going": {
+			"yes": "Idem",
+			"maybe": "Mo\u017eda",
+			"no": "Ne idem"
+		}
 	}
 }

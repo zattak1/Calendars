@@ -365,5 +365,15 @@
 				"EventParticipation": "Ushiriki wa Tukio"
 			}
 		}
+	},
+	"attendance": {
+		"Title": "Mahudhurio",
+		"SearchPlaceholder": "Tafuta kwa jina",
+		"NoOne": "Hakuna mtu bado",
+		"going": {
+			"yes": "Kwenda",
+			"maybe": "Labda",
+			"no": "Siendi"
+		}
 	}
 }
