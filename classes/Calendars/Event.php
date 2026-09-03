@@ -237,6 +237,63 @@ class Calendars_Event extends Base_Calendars_Event
 		Streams_Notification::resume();
 	}
 	/**
+	 * Resolve whatever timezone a client sent into something DateTimeZone
+	 * accepts, or fail with an error naming the field that is wrong.
+	 *
+	 * Every caller below eventually does `new DateTimeZone($timezoneName)`,
+	 * and that constructor throws on an empty or unknown value — which, from
+	 * a browser's point of view, arrives as an opaque
+	 * "Unknown or bad timezone ()" with a stack trace rather than as a field
+	 * error it could show or retry. Two clients can legitimately be missing
+	 * the name: an older browser with no Intl, and any composer whose
+	 * timezone select ended up with nothing selected. Both of them do send
+	 * the numeric offset, so prefer that over failing.
+	 *
+	 * @method normalizeTimezone
+	 * @static
+	 * @param {string} [$timezoneName] An IANA name ("America/New_York") or a
+	 *  GMT offset string ("GMT-7"), as the event composer's select produces.
+	 * @param {string|integer} [$timezoneOffset] Fallback, used only when
+	 *  $timezoneName is empty: minutes *behind* UTC, i.e. exactly what
+	 *  JavaScript's Date#getTimezoneOffset() returns. The sign is therefore
+	 *  the opposite of the one in the string this returns.
+	 * @return {string} A value `new DateTimeZone()` will accept.
+	 * @throws {Q_Exception_BadValue} If a timezone was supplied and is unusable.
+	 * @throws {Q_Exception_RequiredField} If neither argument yields a zone.
+	 */
+	static function normalizeTimezone($timezoneName, $timezoneOffset = null)
+	{
+		if (is_string($timezoneName) and $timezoneName !== '') {
+			try {
+				new DateTimeZone($timezoneName);
+			} catch (Exception $e) {
+				throw new Q_Exception_BadValue(array(
+					'internal' => 'timezoneName',
+					'problem' => "no such timezone: $timezoneName"
+				), 'timezoneName');
+			}
+			return $timezoneName;
+		}
+		if (is_numeric($timezoneOffset)) {
+			$minutes = -(int)round($timezoneOffset); // flip: JS counts westward
+			if ($minutes < -12 * 60 or $minutes > 14 * 60) {
+				throw new Q_Exception_BadValue(array(
+					'internal' => 'timezone',
+					'problem' => "offset out of range: $timezoneOffset"
+				), 'timezone');
+			}
+			return sprintf(
+				'%s%02d:%02d',
+				$minutes < 0 ? '-' : '+',
+				intdiv(abs($minutes), 60),
+				abs($minutes) % 60
+			);
+		}
+		throw new Q_Exception_RequiredField(
+			array('field' => 'timezoneName'), 'timezoneName'
+		);
+	}
+	/**
 	 * Used to start a new group
 	 * @method create
 	 * @param {array} $options
@@ -436,6 +493,22 @@ class Calendars_Event extends Base_Calendars_Event
 			$lat = $locationStream->getAttribute('latitude');
 			$lng = $locationStream->getAttribute('longitude');
             $timezoneName = $locationStream->getAttribute('timeZone');
+		}
+
+		// With no location there is nothing to look a zone up from, so whatever
+		// the client sent is all there is. Validate it here, once, rather than
+		// letting DateTimeZone() throw below with a message that names no field
+		// — a livestream event satisfies the required-field check above on the
+		// livestream URL alone, which is how an empty timezoneName got this far.
+		// Scoped to the branches that actually construct a DateTimeZone: a
+		// caller supplying startTime/endTime outright (the recurring handler,
+		// Calendars_Availability) never needs a zone, and must not start
+		// failing for want of one.
+		if (!$locationStream
+		and (!$startTime or (!$endTime and $localEndDateTime))) {
+			$timezoneName = self::normalizeTimezone(
+				$timezoneName, Q::ifset($r, 'timezone', null)
+			);
 		}
 
 		if (!$startTime) {

@@ -187,8 +187,20 @@ Q.Tool.define("Calendars/event/composer", function(options) {
 		var $toolElement = $(this.element);
 		var state = tool.state;
 		var _getTimezoneOffset = function () {
+			// Date#getTimezoneOffset() returns minutes *behind* UTC, so a zone
+			// at or east of Greenwich is <= 0 and has to render as "GMT+…".
+			// Testing "offset < 0" sent UTC itself — offset exactly 0 — to
+			// "GMT-0", which is not one of the options in the composer template
+			// (that list runs GMT-12 … GMT+0 … GMT+12). jQuery .val() with a
+			// value no option carries *deselects* the select, so it ended up
+			// with selectedIndex -1 and .val() === null, and the submit handler
+			// below then overwrote the perfectly good IANA name from
+			// Q.Intl.calendar() with that null. The server received no
+			// timezoneName at all and constructed DateTimeZone(""), which is
+			// where the request died. Only a browser actually running in UTC
+			// could hit it, which is why it showed up first in CI.
 			var offset = new Date().getTimezoneOffset();
-			var sign = offset < 0 ? '+' : '-';
+			var sign = offset <= 0 ? '+' : '-';
 			offset = Math.abs(offset);
 			return "GMT" + sign + Math.round(offset/60);
 		};
@@ -241,7 +253,16 @@ Q.Tool.define("Calendars/event/composer", function(options) {
 		tool.$paymentStep = $('input.Calendars_composer_step', tool.$payment);
 		tool.$share = tool.$('.Q_buttons.Calendars_step');
 		tool.$timezoneName = tool.$('select[name=timezoneName]');
-		tool.$timezoneName.length && tool.$timezoneName.val(_getTimezoneOffset());
+		if (tool.$timezoneName.length) {
+			tool.$timezoneName.val(_getTimezoneOffset());
+			if (tool.$timezoneName.val() == null) {
+				// The zone is outside the option list, or a half-hour zone
+				// rounded out of it. Leave a real selection rather than an
+				// empty one — anything the user does not touch still has to
+				// submit a value the server can parse.
+				tool.$timezoneName.val('GMT+0');
+			}
+		}
 
 		var paymentTool = null;
 		tool.element.forEachTool("Calendars/payment", function () {
@@ -431,9 +452,16 @@ Q.Tool.define("Calendars/event/composer", function(options) {
 				fields.timezoneName = intl.timeZone;
 			}
 
-			// set diff time zone if defined
-			if (tool.$timezoneName.length && tool.$timezoneName.is(":visible")) {
-				fields.timezoneName = tool.$timezoneName.val();
+			// set diff time zone if defined.
+			// The truthiness test is load-bearing: a select with nothing
+			// selected answers null, and assigning that unconditionally threw
+			// away the IANA name set just above. Only an actual choice should
+			// override the browser's own zone.
+			var timezoneNameSelected = tool.$timezoneName.length
+				&& tool.$timezoneName.is(":visible")
+				&& tool.$timezoneName.val();
+			if (timezoneNameSelected) {
+				fields.timezoneName = timezoneNameSelected;
 			}
 
 			var $this = $(this);
