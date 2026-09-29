@@ -6,25 +6,35 @@
  */
 
 /**
- * Close event stream
+ * Close event stream, as the logged-in user.
+ * The user needs the "close" write level on the stream, which must be a Calendars/event.
  * @method delete
  * @param {array} $_REQUEST
  * @param {string} [$_REQUEST.publisherId] Required. Event stream publisher id.
  * @param {string} [$_REQUEST.streamName] Required. Event stream name.
- * @param {string} [$_REQUEST.userId] Optional. User id request to close stream. Logged user by default.
  * @param {string} [$_REQUEST.stopRecurring] Optional. Pass true to also stop creating recurring events (and things associated to them).
  */
 function Calendars_event_delete($params)
 {
+	$user = Users::loggedInUser(true);
+	// Q/delete checks the nonce without throwing, and only AJAX requests are
+	// refused for it later, so check it here as Streams/access PUT does.
+	Q_Valid::nonce(true);
 	$r = array_merge($_REQUEST, $params);
 	$required = array('streamName', 'publisherId');
 	Q_Valid::requireFields($required, $r, true);
-	$publisherId = $r['publisherId'];
-	$streamName = $r['streamName'];
 
-	$userId = Q::ifset($r, 'userId', Users::loggedInUser(true)->id);
-
-	$stream = Streams_Stream::fetch($userId, $publisherId, $streamName);
+	// Act as the logged-in user only. This used to take a "userId" from the
+	// request, so passing the publisher's id passed the check below, and the
+	// stream was then closed as its publisher, which skips the access check
+	// in Streams::close(): anyone could close any stream.
+	$stream = Streams_Stream::fetch($user->id, $r['publisherId'], $r['streamName'], true);
+	if ($stream->type !== 'Calendars/event') {
+		throw new Q_Exception_WrongType(array(
+			'field' => 'streamName',
+			'type' => 'a Calendars/event stream'
+		));
+	}
 
 	// check if user have permission to close stream (publisher or Community admin or app admin)
 	if (!$stream->testWriteLevel('close')) {
@@ -32,7 +42,10 @@ function Calendars_event_delete($params)
 	}
 
 	// if recurring category exist - close one
-	if (Q::ifset($_REQUEST, 'stopRecurring', false)) {
+	if (Q::ifset($r, 'stopRecurring', false)) {
+		// Authorized by the event: this finds only a series of the event's
+		// own publisher (Streams::related() fetches only related streams of
+		// the same publisher), and it is closed as that publisher, as before.
 		$recurringCategory = Calendars_Recurring::fromStream($stream);
 		if ($recurringCategory) {
 			$recurringCategory->close($recurringCategory->publisherId);
@@ -43,6 +56,6 @@ function Calendars_event_delete($params)
 	$stream->setAttribute("state", "closed");
 	$stream->changed();
 
-	// close stream
-	$stream->close($publisherId);
+	// close stream (Streams::close() checks the access again)
+	$stream->close($user->id);
 }
