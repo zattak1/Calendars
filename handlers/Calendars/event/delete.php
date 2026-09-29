@@ -40,6 +40,13 @@ function Calendars_event_delete($params)
 	if (!$stream->testWriteLevel('close')) {
 		throw new Users_Exception_NotAuthorized();
 	}
+	// Streams::close() also reads the stream's relations as this user and
+	// refuses without "relations" read access. Refuse that here, before the
+	// "state" attribute and Streams/changed below are saved, or the event
+	// would look closed to every viewer while it stays open.
+	if (!$stream->testReadLevel('relations')) {
+		throw new Users_Exception_NotAuthorized();
+	}
 
 	// if recurring category exist - close one
 	if (Q::ifset($r, 'stopRecurring', false)) {
