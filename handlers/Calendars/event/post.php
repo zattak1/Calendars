@@ -16,7 +16,8 @@
  * @param {string} [$_REQUEST.localEndDateTime]  Optional. Local datetime when people should start to disperse
  * @param {string} [$_REQUEST.startTime] If set, uses this time directly instead of localStartDateTime
  * @param {string} [$_REQUEST.endTime] If set, uses this time directly instead of localEndDateTime
- * @param {string} [$_REQUEST.icon] Event illustration image. Can be image URL or path or image contents data.
+ * @param {string} [$_REQUEST.icon] Event illustration image: an http(s) image URL (fetched through Q_Fetch),
+ *   a data:image/...;base64, URI, or image contents data. Never read as a local path.
  * @param {string} [$_REQUEST.timezone=null] Optional. The timezone offset on the browser of the user who created the event.
  * @param {string} [$_REQUEST.timezoneName=null] Optional. The name of the timezone, out of the common ones e.g. "America/New_York".
  * @param {string} [$_REQUEST.labels=''] Optional. You can specify a tab-delimited string of labels to which access is granted. Otherwise access is public.

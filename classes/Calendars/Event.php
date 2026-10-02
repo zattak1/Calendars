@@ -756,35 +756,60 @@ class Calendars_Event extends Base_Calendars_Event
 		return $startTime->format('U');
 	}
 	/**
-	 * Import icon to event stream
+	 * Import icon to event stream.
+	 * $icon usually comes from the request (Calendars/event POST) or from
+	 * imported data, so it is never read as a local path or through a PHP
+	 * stream wrapper: a URL is fetched only through Q_Fetch (http/https only,
+	 * public targets only, re-checked on every redirect; ro#1034).
 	 * @method importIcon
 	 * @static
-	 * @param {String|image source} $icon URL or local path to image or image source.
+	 * @param {String} $icon One of: an http(s) URL of an image; a
+	 *   "data:image/...;base64," URI; raw image bytes; or an icon reference
+	 *   (such as another stream's icon, e.g. "{{baseUrl}}/Q/uploads/...",
+	 *   or a URL on this site), which is set on the stream as it is.
 	 * @param Streams_Stream $eventStream Event stream
-	 * @return array
+	 * @return {boolean} whether an image was saved
 	 */
 	static function importIcon ($icon, $eventStream) {
-		// if icon is URL, get image data
-		if (Q_Valid::url($icon) || @file_exists($icon)) {
-			if ($imageData = file_get_contents($icon)) {
-				$icon = $imageData;
-			}
+		if (!$icon || !is_string($icon)) {
+			return false;
 		}
-
-		// if icon is valid image
-		if ($icon) {
-			if (imagecreatefromstring($icon)) {
-				// upload image to stream
-				Q_Image::save(array(
-					'data' => $icon, // these frills, with base64 and comma, to format image data for Q/image/post handler.
-					'path' => "Q/uploads/Streams",
-					'subpath' => Q_Utils::splitId($eventStream->publisherId, 3, '/')."/".$eventStream->name."/icon/".time(),
-					'save' => "Calendars/event"
-				));
-			} else {
+		if (preg_match('#^data:image/[a-z0-9.+-]+;base64,#i', $icon)) {
+			$data = base64_decode(substr($icon, strpos($icon, ',') + 1), true);
+		} else if (preg_match('#^[a-z][a-z0-9+.-]*:#i', $icon)) {
+			// Any scheme makes it a URL. Our own URLs are references.
+			$baseUrl = rtrim((string)Q_Request::baseUrl(), '/');
+			if ($baseUrl && Q::startsWith($icon, "$baseUrl/")) {
 				$eventStream->icon = $icon;
+				return false;
 			}
+			$data = null;
+			try {
+				$response = Q_Fetch::get($icon, array('maxBytes' => 5242880));
+				if ($response['status'] === 200 && !$response['truncated']) {
+					$data = $response['body'];
+				}
+			} catch (Exception $e) {
+				Q::log("Calendars_Event::importIcon: " . $e->getMessage());
+			}
+		} else if (@imagecreatefromstring($icon)) {
+			$data = $icon; // raw image bytes
+		} else {
+			// An icon reference. Never a path to read: see above.
+			$eventStream->icon = $icon;
+			return false;
 		}
+		if (!$data || !@imagecreatefromstring($data)) {
+			return false;
+		}
+		// upload image to stream
+		Q_Image::save(array(
+			'data' => $data,
+			'path' => "Q/uploads/Streams",
+			'subpath' => Q_Utils::splitId($eventStream->publisherId, 3, '/')."/".$eventStream->name."/icon/".time(),
+			'save' => "Calendars/event"
+		));
+		return true;
 	}
 	/**
 	 * Get event interests in one array
