@@ -49,8 +49,35 @@ function Calendars_after_Streams_relateTo_Calendars_event ($params) {
 	}
 
 	if (class_exists("Assets_Credits")) {
+		// The participant who owns the related stream (checked above to be
+		// participating) pays the event's publisher for it, in the main
+		// community's credits, as Calendars_Event::going() pays for the
+		// participant's own place. The ledger row records the related stream
+		// as fromPublisherId/fromStreamName, which is what getPaymentsInfo()
+		// and going()'s related-participants check look for.
+		$fromUserId = $stream->publisherId;
+		// Never charge someone for a relation another user made
+		$asUserId = Q::ifset($params, 'asUserId', null);
+		if (!isset($asUserId)) {
+			$asUserId = Q::ifset(Users::loggedInUser(), 'id', null);
+		}
+		if ((string)$asUserId !== (string)$fromUserId) {
+			throw new Users_Exception_NotAuthorized();
+		}
+		$relatedStream = array('publisherId' => $fromPublisherId, 'streamName' => $fromStreamName);
+		if (Assets_Credits::getPaymentsInfo($fromUserId, $event, $relatedStream)["conclusion"]["fullyPaid"]) {
+			return true;
+		}
 		$needCredits = Assets_Credits::convert($amount, $currency, "credits");
-		$autoCharge = true;
-		Assets_Credits::spend($needCredits, Assets::JOINED_PAID_STREAM, $stream->publisherId, @compact("toPublisherId", "toStreamName", "fromPublisherId", "fromStreamName", "autoCharge"));
+		// spend() does not buy missing credits (autoCharge is Assets::pay()'s
+		// option): it throws Assets_Exception_NotEnoughCredits, after the
+		// relation has been saved.
+		Assets_Credits::spend(
+			Users::communityId(),
+			$needCredits,
+			Assets::JOINED_PAID_STREAM,
+			$fromUserId,
+			@compact("toPublisherId", "toStreamName", "fromPublisherId", "fromStreamName")
+		);
 	}
 }

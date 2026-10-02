@@ -1282,6 +1282,14 @@ class Calendars_Event extends Base_Calendars_Event
 				continue;
 			}
 
+			// Only the user's own streams (their pets, children...): relating a
+			// paid participant stream charges its publisher
+			// (Calendars/after/Streams_relateTo_Calendars_event), and the list
+			// comes from the request (Calendars/recurring PUT).
+			if ((string)$publisherId !== (string)$userId) {
+				continue;
+			}
+
 			$streamToRelate = Streams_Stream::fetch($publisherId, $publisherId, $streamName);
 			if (!$streamToRelate || !is_null($streamToRelate->closedTime)) {
 				continue;
