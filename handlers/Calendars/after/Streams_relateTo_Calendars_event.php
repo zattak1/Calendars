@@ -1,12 +1,13 @@
 <?php
 function Calendars_after_Streams_relateTo_Calendars_event ($params) {
 	$event = $params['category'];
-	$toPublisherId = $event->publisherId;
-	$toStreamName = $event->name;
-
 	$stream = $params['stream'];
-	$fromPublisherId = $stream->publisherId;
-	$fromStreamName = $stream->name;
+
+	// The charge for a paid participant stream was made by
+	// Calendars/before/Streams_relateTo_Calendars_event, inside a
+	// transaction that Streams::relate() has now inserted the relation into:
+	// commit both together (ro#1039).
+	Calendars_Event::settleChargeBeforeRelating($event, $stream, true);
 
 	// check if related stream type belong to the list of paid stream types
 	$fromStreamType = $stream->type;
@@ -18,14 +19,13 @@ function Calendars_after_Streams_relateTo_Calendars_event ($params) {
 	// check if stream payment required
 	$amount = Q::ifset($event->getAttribute("payment"), "amount", null);
 	$currency = Q::ifset($event->getAttribute("payment"), "currency", null);
-	$isPublisher = $stream->publisherId == $event->publisherId;
-	$isAdmin = Calendars_Event::isAdmin($stream->publisherId, $event->getAttribute("communityId"));
 	if (!$amount || !$currency) {
 		return true;
 	}
+	$isPublisher = $stream->publisherId == $event->publisherId;
+	$isAdmin = Calendars_Event::isAdmin($stream->publisherId, $event->getAttribute("communityId"));
 
-	// if user not participating to event, don't spend credits
-	// will spend when user participated
+	// if user not participating to event, nothing was charged
 	$participant = new Streams_Participant();
 	$participant->publisherId = $event->publisherId;
 	$participant->streamName = $event->name;
@@ -44,40 +44,7 @@ function Calendars_after_Streams_relateTo_Calendars_event ($params) {
 				"reason" => $isPublisher ? "publisher" : "admin"
 			)
 		), true);
-
-		return true;
 	}
 
-	if (class_exists("Assets_Credits")) {
-		// The participant who owns the related stream (checked above to be
-		// participating) pays the event's publisher for it, in the main
-		// community's credits, as Calendars_Event::going() pays for the
-		// participant's own place. The ledger row records the related stream
-		// as fromPublisherId/fromStreamName, which is what getPaymentsInfo()
-		// and going()'s related-participants check look for.
-		$fromUserId = $stream->publisherId;
-		// Never charge someone for a relation another user made
-		$asUserId = Q::ifset($params, 'asUserId', null);
-		if (!isset($asUserId)) {
-			$asUserId = Q::ifset(Users::loggedInUser(), 'id', null);
-		}
-		if ((string)$asUserId !== (string)$fromUserId) {
-			throw new Users_Exception_NotAuthorized();
-		}
-		$relatedStream = array('publisherId' => $fromPublisherId, 'streamName' => $fromStreamName);
-		if (Assets_Credits::getPaymentsInfo($fromUserId, $event, $relatedStream)["conclusion"]["fullyPaid"]) {
-			return true;
-		}
-		$needCredits = Assets_Credits::convert($amount, $currency, "credits");
-		// spend() does not buy missing credits (autoCharge is Assets::pay()'s
-		// option): it throws Assets_Exception_NotEnoughCredits, after the
-		// relation has been saved.
-		Assets_Credits::spend(
-			Users::communityId(),
-			$needCredits,
-			Assets::JOINED_PAID_STREAM,
-			$fromUserId,
-			@compact("toPublisherId", "toStreamName", "fromPublisherId", "fromStreamName")
-		);
-	}
+	return true;
 }

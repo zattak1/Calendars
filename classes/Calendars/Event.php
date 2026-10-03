@@ -25,6 +25,117 @@ class Calendars_Event extends Base_Calendars_Event
     */
     public static $callScope = array();
 
+	/**
+	 * Charges made by Calendars/before/Streams_relateTo_Calendars_event whose
+	 * transaction is still open, waiting for the relation to be inserted
+	 * into it; keyed by relatedChargeKey() (ro#1039).
+	 * @property {array} chargesBeforeRelating
+	 * @static
+	 * @protected
+	 */
+	protected static $chargesBeforeRelating = array();
+
+	/**
+	 * Charges the owner of a paid participant stream before it is related to
+	 * a paid event: opens a transaction on the Streams connection and spends
+	 * inside it, leaving the transaction open for Streams::relate() to insert
+	 * the relation into. settleChargeBeforeRelating() commits it from the
+	 * after hook. Called by Calendars/before/Streams_relateTo_Calendars_event,
+	 * which explains the guarantees (ro#1039).
+	 *
+	 * spend() refusing (Assets_Exception_NotEnoughCredits, or the held-lock
+	 * check when this runs inside another movement) rolls the transaction
+	 * back and rethrows, so nothing is related and nothing moves.
+	 * @method chargeBeforeRelating
+	 * @static
+	 * @param {Streams_Stream} $event The paid Calendars/event
+	 * @param {Streams_Stream} $stream The paid participant stream being related
+	 * @param {string} $fromUserId Its owner, who pays
+	 * @param {float} $credits The price, in credits
+	 * @throws {Assets_Exception_NotEnoughCredits}
+	 */
+	static function chargeBeforeRelating($event, $stream, $fromUserId, $credits)
+	{
+		Streams_RelatedTo::begin(false)->execute();
+		try {
+			Assets_Credits::spend(Users::communityId(), $credits, Assets::JOINED_PAID_STREAM, $fromUserId, array(
+				'toPublisherId' => $event->publisherId,
+				'toStreamName' => $event->name,
+				'fromPublisherId' => $stream->publisherId,
+				'fromStreamName' => $stream->name
+			));
+		} catch (Exception $e) {
+			// spend() has usually rolled back already; keep its error
+			self::rollbackKeepingError();
+			throw $e;
+		}
+		self::$chargesBeforeRelating[self::relatedChargeKey($event, $stream)] = true;
+	}
+
+	/**
+	 * Commits (or rolls back) the transaction chargeBeforeRelating() left
+	 * open for this event and stream, if there is one.
+	 * @method settleChargeBeforeRelating
+	 * @static
+	 * @param {Streams_Stream} $event
+	 * @param {Streams_Stream} $stream
+	 * @param {boolean} $commit
+	 * @return {boolean} Whether a charge was pending
+	 */
+	static function settleChargeBeforeRelating($event, $stream, $commit)
+	{
+		$key = self::relatedChargeKey($event, $stream);
+		if (empty(self::$chargesBeforeRelating[$key])) {
+			return false;
+		}
+		unset(self::$chargesBeforeRelating[$key]);
+		if ($commit) {
+			Streams_RelatedTo::commit()->execute();
+		} else {
+			self::rollbackKeepingError();
+		}
+		return true;
+	}
+
+	/**
+	 * Rolls back every charge still waiting for its relation, after a relate
+	 * failed between Calendars/before and Calendars/after
+	 * Streams_relateTo_Calendars_event. A caller that catches such a failure
+	 * and keeps writing must call this first; otherwise its writes join the
+	 * open transaction (ro#1039).
+	 * @method rollbackChargesBeforeRelating
+	 * @static
+	 * @return {boolean} Whether anything was pending
+	 */
+	static function rollbackChargesBeforeRelating()
+	{
+		if (!self::$chargesBeforeRelating) {
+			return false;
+		}
+		self::$chargesBeforeRelating = array();
+		self::rollbackKeepingError();
+		return true;
+	}
+
+	private static function relatedChargeKey($event, $stream)
+	{
+		return implode("\t", array(
+			$event->publisherId, $event->name, $stream->publisherId, $stream->name
+		));
+	}
+
+	/**
+	 * Rolls back the Streams connection's transaction, dropping the "no
+	 * active transaction" error a statement failure's own rollback causes.
+	 */
+	private static function rollbackKeepingError()
+	{
+		try {
+			Streams_RelatedTo::rollback()->execute();
+		} catch (Exception $ignored) {
+		}
+	}
+
 	static function defaultDuration()
 	{
 		return Q_Config::expect('Calendars', 'events', 'defaults', 'duration');
@@ -1047,7 +1158,6 @@ class Calendars_Event extends Base_Calendars_Event
 
 				// check payment
 				$paymentRequired = false;
-				$resAmount = 0;
 				if ($paymentType == "required" && ($isPublisher || $isAdmin)) {
 					Streams_Message::post($userId, $userId, "Calendars/user/reminders", array(
 						"type" => "Calendars/payment/skip",
@@ -1058,12 +1168,20 @@ class Calendars_Event extends Base_Calendars_Event
 						)
 					), true);
 				} elseif (!$skipPayment && $paymentType == 'required') {
-					if (!Assets_Credits::getPaymentsInfo($userId, $stream)["conclusion"]["fullyPaid"]) {
-						$resAmount += $amount;
-						$paymentRequired = true;
-					}
-
-					// also check payment for all related streams
+					// One payment per unpaid item, each recorded under the
+					// ledger key getPaymentsInfo() looks it up by: a related
+					// stream's carries its fromPublisherId/fromStreamName, the
+					// participant's own place carries none. They were paid as
+					// one lump with no from* fields, so a related stream's
+					// payment was never recognised and every later going()
+					// charged for it again (ro#1039).
+					//
+					// Related streams first, the participant's own place
+					// last: an unpaid item stops the loop with its own intent,
+					// and Calendars/after/Assets_credits_spend makes the user
+					// going=yes when their own place is paid -- by then,
+					// everything before it in this list is too.
+					$unpaid = array();
 					$possibleRelatedParticipants = Q_Config::get('Assets', 'service', 'relatedParticipants', array());
 					foreach ($possibleRelatedParticipants as $streamType => $relatedParticipant) {
 						$relatedRows = Streams_RelatedTo::select()->where(array(
@@ -1071,36 +1189,49 @@ class Calendars_Event extends Base_Calendars_Event
 							'toStreamName' => $stream->name,
 							'fromPublisherId' => $userId,
 							'type' => $relatedParticipant["relationType"]
-						))->fetchDbRows();
+						))->ignoreCache()->fetchDbRows();
 						foreach ($relatedRows as $relatedRow) {
 							if (!Assets_Credits::getPaymentsInfo($userId, $stream, array(
 									'publisherId' => $relatedRow->fromPublisherId,
 									'streamName' => $relatedRow->fromStreamName)
 							)["conclusion"]["fullyPaid"]) {
-								$resAmount += $amount;
-								$paymentRequired = true;
+								$unpaid[] = array(
+									'fromPublisherId' => $relatedRow->fromPublisherId,
+									'fromStreamName' => $relatedRow->fromStreamName
+								);
 							}
 						}
 					}
+					if (!Assets_Credits::getPaymentsInfo($userId, $stream)["conclusion"]["fullyPaid"]) {
+						$unpaid[] = array();
+					}
 
-					if ($paymentRequired) {
+					if ($unpaid) {
+						$paymentRequired = true;
 						$token = Q::ifset($_SESSION, 'Streams', 'invite', 'token', null);
-						$result = Assets::pay(
-							Users::communityId(), 
-							$userId, 
-							$resAmount,
-                            Assets::JOINED_PAID_STREAM,
-							array_merge($options, array(
-								'toPublisherId' => $stream->publisherId,
-								'toStreamName' => $stream->name,
-								// the currency the event was priced in. Assets::pay() defaults to
-								// 'USD' and converts, while Assets_Credits::getPaymentsInfo() reads
-								// this same attribute defaulting to 'credits', so omitting it made
-								// a credits-priced event charge convert(amount, USD => credits).
-								'currency' => Q::ifset($payment, 'currency', 'credits'),
-								'autoCharge' => $options['autoCharge']
-							))
-						);
+						foreach ($unpaid as $from) {
+							$result = Assets::pay(
+								Users::communityId(),
+								$userId,
+								$amount,
+								Assets::JOINED_PAID_STREAM,
+								array_merge($options, array(
+									'toPublisherId' => $stream->publisherId,
+									'toStreamName' => $stream->name,
+									'fromPublisherId' => Q::ifset($from, 'fromPublisherId', null),
+									'fromStreamName' => Q::ifset($from, 'fromStreamName', null),
+									// the currency the event was priced in. Assets::pay() defaults to
+									// 'USD' and converts, while Assets_Credits::getPaymentsInfo() reads
+									// this same attribute defaulting to 'credits', so omitting it made
+									// a credits-priced event charge convert(amount, USD => credits).
+									'currency' => Q::ifset($payment, 'currency', 'credits'),
+									'autoCharge' => Q::ifset($options, 'autoCharge', false)
+								))
+							);
+							if (empty($result['success'])) {
+								break;
+							}
+						}
 						if (!empty($result['success'])) {
 							// after a successful payment, set going and skip payment
 							$options['paid'] = 'autoCharge';
@@ -1335,11 +1466,17 @@ class Calendars_Event extends Base_Calendars_Event
 				}
 			}
 
-			$streamToRelate->relateTo($event, $streamToRelate->type, null, array(
-				"skipAccess" => true,
-				"ignoreCache" => true,
-				"weight" => time()
-			));
+			try {
+				$streamToRelate->relateTo($event, $streamToRelate->type, null, array(
+					"skipAccess" => true,
+					"ignoreCache" => true,
+					"weight" => time()
+				));
+			} catch (Exception $e) {
+				// a charge made before relating must not outlive a failed relate
+				self::rollbackChargesBeforeRelating();
+				throw $e;
+			}
 		}
 
 		// remove participants

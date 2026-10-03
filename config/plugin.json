@@ -19,6 +19,7 @@
 			"Q/sessionExtras": ["Calendars/before/Q_sessionExtras"],
 			"Streams/close/Assets/service": ["Calendars/before/Streams_close_Assets_service"],
 			"Streams/close/Calendars/event": ["Calendars/before/Streams_close_Calendars_event"],
+			"Streams/relateTo/Calendars/event": ["Calendars/before/Streams_relateTo_Calendars_event"],
 			"Db/Row/Streams_Participant/save": ["Calendars/before/Streams_Participant"]
 		},
 		"handlersAfterEvent": {
