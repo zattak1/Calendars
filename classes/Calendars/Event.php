@@ -447,15 +447,23 @@ class Calendars_Event extends Base_Calendars_Event
 					), false);
 
 					foreach ($results as $result) {
-						// get just header
-						$ch = curl_init($result);
-						curl_setopt($ch, CURLOPT_HEADER, true);    // we want headers
-						curl_setopt($ch, CURLOPT_NOBODY, true);    // we don't need body
-						curl_setopt($ch, CURLOPT_RETURNTRANSFER,1);
-						curl_setopt($ch, CURLOPT_TIMEOUT,10);
-						curl_exec($ch);
-						$HTTPcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-						curl_close($ch);
+						// Probe the third-party result only through Q_Fetch
+						// (http/https, public targets, redirects re-checked),
+						// not a bare curl HEAD with libcurl's default
+						// protocols and no target check (ro#1045).
+						if (!is_string($result)
+						|| !preg_match('#^https?://#i', $result)) {
+							continue;
+						}
+						try {
+							$probe = Q_Fetch::get($result, array(
+								'timeout' => 10,
+								'maxBytes' => 65536
+							));
+							$HTTPcode = $probe['status'];
+						} catch (Exception $e) {
+							$HTTPcode = 0;
+						}
 
 						if ($HTTPcode == 200) {
 							$r['icon'] = $result;
