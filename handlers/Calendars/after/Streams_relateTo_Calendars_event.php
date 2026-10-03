@@ -7,7 +7,9 @@ function Calendars_after_Streams_relateTo_Calendars_event ($params) {
 	// Calendars/before/Streams_relateTo_Calendars_event, inside a
 	// transaction that Streams::relate() has now inserted the relation into:
 	// commit both together (ro#1039).
-	Calendars_Event::settleChargeBeforeRelating($event, $stream, true);
+	// It is rolled back instead if the relation is not there: relate() fires
+	// this hook even for a stream a relateFrom before hook vetoed.
+	Calendars_Event::settleChargeBeforeRelating($event, $stream, $params['type'], true);
 
 	// check if related stream type belong to the list of paid stream types
 	$fromStreamType = $stream->type;

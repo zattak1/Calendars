@@ -28,12 +28,34 @@ class Calendars_Event extends Base_Calendars_Event
 	/**
 	 * Charges made by Calendars/before/Streams_relateTo_Calendars_event whose
 	 * transaction is still open, waiting for the relation to be inserted
-	 * into it; keyed by relatedChargeKey() (ro#1039).
+	 * into it: relatedChargeKey() => the Streams connection's transaction
+	 * nesting depth just after chargeBeforeRelating()'s begin (ro#1039).
 	 * @property {array} chargesBeforeRelating
 	 * @static
 	 * @protected
 	 */
 	protected static $chargesBeforeRelating = array();
+
+	/**
+	 * Forgets a pending charge for this event, stream and relation type, for
+	 * the before hook to call first. An entry still here when the before
+	 * hook runs again for the same relation belongs to a relate that failed
+	 * before its after hook: its transaction was rolled back (a failed
+	 * statement, the shutdown rollback) or must be. Left in place, the next
+	 * after hook for this relation -- in a later relate that charges nothing
+	 * -- would commit, popping whatever transaction is open then (audit R1
+	 * of ro#1065). The key includes the relation type, so a relate with
+	 * several types does not forget the charge its first type made.
+	 * @method forgetChargeBeforeRelating
+	 * @static
+	 * @param {Streams_Stream} $event
+	 * @param {Streams_Stream} $stream
+	 * @param {string} $type The relation type
+	 */
+	static function forgetChargeBeforeRelating($event, $stream, $type)
+	{
+		unset(self::$chargesBeforeRelating[self::relatedChargeKey($event, $stream, $type)]);
+	}
 
 	/**
 	 * Charges the owner of a paid participant stream before it is related to
@@ -50,13 +72,27 @@ class Calendars_Event extends Base_Calendars_Event
 	 * @static
 	 * @param {Streams_Stream} $event The paid Calendars/event
 	 * @param {Streams_Stream} $stream The paid participant stream being related
+	 * @param {string} $type The relation type
 	 * @param {string} $fromUserId Its owner, who pays
 	 * @param {float} $credits The price, in credits
 	 * @throws {Assets_Exception_NotEnoughCredits}
+	 * @throws {Q_Exception} if the relation and the ledger would not share one PDO
 	 */
-	static function chargeBeforeRelating($event, $stream, $fromUserId, $credits)
+	static function chargeBeforeRelating($event, $stream, $type, $fromUserId, $credits)
 	{
-		Streams_RelatedTo::begin(false)->execute();
+		// One transaction spans the relation (Streams), the balances
+		// (Streams) and the ledger row (Assets) only if both connections
+		// resolve to the same PDO: the nesting counter is kept per DSN, but
+		// PDOs per DSN, credentials and driver_options (audit R3 of ro#1065).
+		if (Streams_RelatedTo::db()->reallyConnect() !== Assets_Credits::db()->reallyConnect()) {
+			throw new Q_Exception(
+				"Calendars_Event::chargeBeforeRelating: the Streams and Assets connections"
+				. " use different PDOs, so the charge and the relation can't share a transaction"
+			);
+		}
+		$begin = Streams_RelatedTo::begin(false);
+		$begin->execute();
+		$depth = $begin->nestedTransactionCount;
 		try {
 			Assets_Credits::spend(Users::communityId(), $credits, Assets::JOINED_PAID_STREAM, $fromUserId, array(
 				'toPublisherId' => $event->publisherId,
@@ -69,32 +105,56 @@ class Calendars_Event extends Base_Calendars_Event
 			self::rollbackKeepingError();
 			throw $e;
 		}
-		self::$chargesBeforeRelating[self::relatedChargeKey($event, $stream)] = true;
+		self::$chargesBeforeRelating[self::relatedChargeKey($event, $stream, $type)] = $depth;
 	}
 
 	/**
-	 * Commits (or rolls back) the transaction chargeBeforeRelating() left
-	 * open for this event and stream, if there is one.
+	 * Commits the transaction chargeBeforeRelating() left open for this
+	 * event, stream and relation type, if there is one -- or rolls it back,
+	 * when asked to or when the relation is not there to commit with it.
+	 *
+	 * Streams::relate() fires the after hooks even for a stream whose
+	 * Streams/relateFrom/<type> before hook returned false and which it
+	 * never inserted, so the relation row is checked first: committing then
+	 * would charge for nothing (audit R2 of ro#1065). And the commit is
+	 * skipped when the connection's nesting depth is below the one recorded
+	 * at the begin: that transaction has already ended (rolled back by a
+	 * failed statement), so a commit now would pop another one's count.
 	 * @method settleChargeBeforeRelating
 	 * @static
 	 * @param {Streams_Stream} $event
 	 * @param {Streams_Stream} $stream
+	 * @param {string} $type The relation type
 	 * @param {boolean} $commit
-	 * @return {boolean} Whether a charge was pending
+	 * @return {boolean} Whether a pending charge was committed
 	 */
-	static function settleChargeBeforeRelating($event, $stream, $commit)
+	static function settleChargeBeforeRelating($event, $stream, $type, $commit)
 	{
-		$key = self::relatedChargeKey($event, $stream);
-		if (empty(self::$chargesBeforeRelating[$key])) {
+		$key = self::relatedChargeKey($event, $stream, $type);
+		if (!isset(self::$chargesBeforeRelating[$key])) {
 			return false;
 		}
+		$depth = self::$chargesBeforeRelating[$key];
 		unset(self::$chargesBeforeRelating[$key]);
+		if (self::transactionDepth() < $depth) {
+			return false; // already rolled back; nothing of ours is open
+		}
+		if ($commit) {
+			$related = Streams_RelatedTo::select('COUNT(1)')->where(array(
+				'toPublisherId' => $event->publisherId,
+				'toStreamName' => $event->name,
+				'type' => $type,
+				'fromPublisherId' => $stream->publisherId,
+				'fromStreamName' => $stream->name
+			))->ignoreCache()->caching(false)->fetchAll(PDO::FETCH_COLUMN);
+			$commit = !empty($related[0]);
+		}
 		if ($commit) {
 			Streams_RelatedTo::commit()->execute();
 		} else {
 			self::rollbackKeepingError();
 		}
-		return true;
+		return $commit;
 	}
 
 	/**
@@ -117,11 +177,22 @@ class Calendars_Event extends Base_Calendars_Event
 		return true;
 	}
 
-	private static function relatedChargeKey($event, $stream)
+	private static function relatedChargeKey($event, $stream, $type)
 	{
 		return implode("\t", array(
-			$event->publisherId, $event->name, $stream->publisherId, $stream->name
+			$event->publisherId, $event->name, $type, $stream->publisherId, $stream->name
 		));
+	}
+
+	/**
+	 * The Streams connection's transaction nesting depth (0: none open),
+	 * read by executing an empty statement, which sends nothing.
+	 */
+	private static function transactionDepth()
+	{
+		$q = Streams_RelatedTo::db()->rawQuery('');
+		$q->execute();
+		return (int)$q->nestedTransactionCount;
 	}
 
 	/**

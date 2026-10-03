@@ -22,9 +22,14 @@
  *   the next failed statement or the shutdown rollback undoes both
  *   (Calendars_Event::relateParticipants() rolls back at once).
  *
- * One transaction needs one DSN: the relation and the balance streams are
- * Streams rows, so they always share it; the ledger row (Assets connection)
- * does too wherever Assets and Streams share a database, as in our apps.
+ * One transaction needs one PDO -- same DSN, credentials and driver_options:
+ * the relation and the balance streams are Streams rows, so they always
+ * share it; the ledger row (Assets connection) does wherever the Assets and
+ * Streams connections resolve to the same PDO, as in our apps.
+ * chargeBeforeRelating() refuses otherwise.
+ *
+ * The after hook commits only if the relation row is there: Streams::relate()
+ * fires after hooks even for a stream a Streams/relateFrom before hook vetoed.
  *
  * @param {array} $params Streams::relate()'s before-hook parameters
  * @throws Users_Exception_NotAuthorized for a relation someone other than
@@ -35,6 +40,11 @@ function Calendars_before_Streams_relateTo_Calendars_event($params)
 {
 	$event = $params['category'];
 	$stream = $params['stream'];
+	$type = $params['type'];
+
+	// A pending charge left by an earlier relate of this stream that failed
+	// before its after hook is stale; see forgetChargeBeforeRelating()
+	Calendars_Event::forgetChargeBeforeRelating($event, $stream, $type);
 
 	// paid participant types only
 	$paidStreamTypes = Q_Config::get("Assets", "service", "relatedParticipants", null);
@@ -87,7 +97,7 @@ function Calendars_before_Streams_relateTo_Calendars_event($params)
 		return;
 	}
 
-	Calendars_Event::chargeBeforeRelating($event, $stream, $fromUserId,
+	Calendars_Event::chargeBeforeRelating($event, $stream, $type, $fromUserId,
 		Assets_Credits::convert($amount, $currency, "credits")
 	);
 }
