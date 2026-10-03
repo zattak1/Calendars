@@ -1291,6 +1291,11 @@ class Calendars_Event extends Base_Calendars_Event
 									'toStreamName' => $stream->name,
 									'fromPublisherId' => Q::ifset($from, 'fromPublisherId', null),
 									'fromStreamName' => Q::ifset($from, 'fromStreamName', null),
+									// The event's discount is per booking: it goes on
+									// the participant's own place, once. Related
+									// streams pay the full price, as the relateTo
+									// hook charges them (ro#1065 audit R4).
+									'skipDiscounts' => !empty($from),
 									// the currency the event was priced in. Assets::pay() defaults to
 									// 'USD' and converts, while Assets_Credits::getPaymentsInfo() reads
 									// this same attribute defaulting to 'credits', so omitting it made
