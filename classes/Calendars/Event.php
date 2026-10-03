@@ -90,11 +90,18 @@ class Calendars_Event extends Base_Calendars_Event
 				. " use different PDOs, so the charge and the relation can't share a transaction"
 			);
 		}
+		// spend() fetches or creates both balance streams before it locks
+		// them, so that creating one (with its starting grant()) happens
+		// outside any transaction; inside ours, a rollback would undo the
+		// stream while Assets_Credits' caches still had it. So do it first.
+		$communityId = Users::communityId();
+		Assets_Credits::stream($communityId, $fromUserId, $communityId);
+		Assets_Credits::stream($communityId, $event->publisherId, $communityId, true);
 		$begin = Streams_RelatedTo::begin(false);
 		$begin->execute();
 		$depth = $begin->nestedTransactionCount;
 		try {
-			Assets_Credits::spend(Users::communityId(), $credits, Assets::JOINED_PAID_STREAM, $fromUserId, array(
+			Assets_Credits::spend($communityId, $credits, Assets::JOINED_PAID_STREAM, $fromUserId, array(
 				'toPublisherId' => $event->publisherId,
 				'toStreamName' => $event->name,
 				'fromPublisherId' => $stream->publisherId,
