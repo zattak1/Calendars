@@ -25,6 +25,7 @@
 		"handlersAfterEvent": {
 			"Assets/credits/spend": ["Calendars/after/Assets_credits_spend"],
 			"Assets/credits/refund": ["Calendars/after/Assets_credits_refund"],
+			"Assets/refunded": ["Calendars/after/Assets_refunded"],
 			"Streams/create/Calendars/event": ["Calendars/after/Streams_create_Calendars_event"],
 			"Streams/leave": ["Calendars/after/Streams_leave"],
 			"Streams/relateTo/Calendars/event": ["Calendars/after/Streams_relateTo_Calendars_event"],
