@@ -1197,8 +1197,11 @@ class Calendars_Event extends Base_Calendars_Event
 			}
 
 			// unsubscribe from recurring category
+			// As $userId, not the logged-in user: going() also runs where
+			// nobody is logged in (a webhook cancelling a refunded booking,
+			// ro#1246), and unsubscribe() then threw for want of a user.
 			if ($recurringCategory instanceof Streams_Stream) {
-				$recurringCategory->unsubscribe();
+				$recurringCategory->unsubscribe(array('userId' => $userId));
 			}
 
 			Q::event('Calendars/event/leave', array(
